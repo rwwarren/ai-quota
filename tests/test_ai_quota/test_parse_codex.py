@@ -1,10 +1,7 @@
 """Tests for ai_quota.providers.codex — pure parsing functions only."""
 from datetime import datetime, timedelta
 
-import pytest
-
-from ai_quota.providers.codex import parse_tui_output, _parse_reset_ts
-
+from ai_quota.providers.codex import _parse_reset_ts, parse_tui_output
 
 # ---------------------------------------------------------------------------
 # parse_tui_output

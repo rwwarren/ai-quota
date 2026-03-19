@@ -1,6 +1,7 @@
 """Tests for the public ai_quota API: get_usage() and is_exhausted()."""
-import pytest
 from unittest.mock import patch
+
+import pytest
 
 import ai_quota
 

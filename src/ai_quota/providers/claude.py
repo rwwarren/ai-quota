@@ -10,7 +10,8 @@ import sys
 import time
 from datetime import datetime, timedelta
 
-from ai_quota.cache import read_cache as _read, write_cache as _write
+from ai_quota.cache import read_cache as _read
+from ai_quota.cache import write_cache as _write
 from ai_quota.formatters import fmt_bar, fmt_reset
 
 CACHE_FILE = os.environ.get("CLAUDE_USAGE_CACHE", "/tmp/cc-usage-pct.cache")

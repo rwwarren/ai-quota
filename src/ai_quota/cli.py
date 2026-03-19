@@ -18,7 +18,7 @@ from __future__ import annotations
 import json
 import sys
 
-from ai_quota.providers import claude, gemini, codex
+from ai_quota.providers import claude, codex, gemini
 
 _MODS = {"claude": claude, "gemini": gemini, "codex": codex}
 
