@@ -1,10 +1,7 @@
 """Tests for ai_quota.providers.claude — pure parsing functions only."""
-import pytest
-from unittest.mock import patch
 from datetime import datetime, timedelta
 
-from ai_quota.providers.claude import parse_usage, _parse_reset_ts, _clean, _normalize_label
-
+from ai_quota.providers.claude import _clean, _normalize_label, _parse_reset_ts, parse_usage
 
 # ---------------------------------------------------------------------------
 # _clean

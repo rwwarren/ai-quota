@@ -1,8 +1,9 @@
 """Tests for ai_quota.providers.gemini — pure parsing functions only."""
 from datetime import datetime, timedelta
 
-from ai_quota.providers.gemini import parse_usage, _parse_reset_ts
+import pytest
 
+from ai_quota.providers.gemini import _parse_reset_ts, parse_usage
 
 # ---------------------------------------------------------------------------
 # parse_usage
@@ -44,9 +45,6 @@ class TestParseUsage:
         raw = "gemini-2.0-flash  1000  75%\ngemini-2.0-pro  500  40%"
         entries = parse_usage(raw)
         assert len(entries) == 2
-
-
-import pytest
 
 
 # ---------------------------------------------------------------------------

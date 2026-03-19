@@ -15,9 +15,10 @@ import sqlite3
 import struct
 import subprocess
 import time
-from datetime import date, datetime, timedelta
+from datetime import date, datetime
 
-from ai_quota.cache import read_cache as _read, write_cache as _write
+from ai_quota.cache import read_cache as _read
+from ai_quota.cache import write_cache as _write
 from ai_quota.formatters import fmt_bar, fmt_reset
 
 CACHE_FILE = os.environ.get("CODEX_USAGE_CACHE", "/tmp/codex-usage.cache")
@@ -51,6 +52,7 @@ def _spawn_codex_and_read() -> str:
     """Spawn codex TUI, send /status, capture output with pyte."""
     import pty
     import termios
+
     import pyte
 
     master, slave = pty.openpty()

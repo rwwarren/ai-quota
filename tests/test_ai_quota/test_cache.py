@@ -1,9 +1,6 @@
 """Tests for ai_quota.cache — read/write helpers."""
 import json
 import os
-import tempfile
-
-import pytest
 
 from ai_quota.cache import read_cache, write_cache
 

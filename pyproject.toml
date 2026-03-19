@@ -42,3 +42,11 @@ addopts = "-v --tb=short"
 [tool.coverage.run]
 source = ["src"]
 omit = ["tests/*"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def fetch_live",
+    "def _spawn_codex_and_read",
+    "def _read_pty",
+]

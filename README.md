@@ -1,5 +1,8 @@
 # ai-quota
 
+[![CI](https://github.com/rwwarren/ai-quota/actions/workflows/ci.yml/badge.svg)](https://github.com/rwwarren/ai-quota/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/rwwarren/ai-quota/branch/main/graph/badge.svg)](https://codecov.io/gh/rwwarren/ai-quota)
+
 Unified CLI and Python API for monitoring quota usage across AI coding assistants: **Claude Code**, **Gemini CLI**, and **Codex**.
 
 ## Features
@@ -113,10 +116,16 @@ ai-quota/
 # Run tests
 pytest
 
-# Run with coverage
-pytest --cov=src
+# Run with coverage (enforces 80% minimum)
+pytest --cov=ai_quota --cov-report=term-missing --cov-fail-under=80
 
 # Lint & format
 ruff check src tests
 ruff format src tests
 ```
+
+CI runs on every push and PR via GitHub Actions (Python 3.11–3.13), with ruff linting, pytest, and coverage uploaded to Codecov.
+
+## See Also
+
+- [cc-usage-bar](https://github.com/lionhylra/cc-usage-bar) — Native macOS menu bar app for Claude Code usage. Same core approach (spawns `claude`, runs `/usage`, parses terminal output) but as a Swift/SwiftUI GUI instead of a CLI/library.
