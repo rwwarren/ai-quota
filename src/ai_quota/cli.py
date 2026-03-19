@@ -5,7 +5,7 @@ Usage::
     ai-quota claude [--json | --short | --slack | --pretty]
     ai-quota gemini [--json | --short | --slack]
     ai-quota codex  [--json | --short | --slack | --pretty]
-    ai-quota all    [--short | --slack]   # all providers
+    ai-quota all    [--short | --slack | --refresh]   # all providers
 
     # Use cached data (instant, no subprocess)
     ai-quota claude --cached [--short | --slack | --json]
@@ -85,6 +85,17 @@ def _print(mod, entries: list[dict], fmt: str) -> None:
 
 def _run_all(args: list[str]) -> None:
     fmt = args[0] if args else "--short"
+
+    if fmt == "--refresh":
+        for name, mod in _MODS.items():
+            entries = mod.fetch_live()
+            if entries:
+                mod.write_cache(entries)
+                print(f"{name}: {mod.fmt_short(entries)}")
+            else:
+                print(f"{name}: no usage data", file=sys.stderr)
+        return
+
     parts = []
     for name, mod in _MODS.items():
         entries = mod.read_cache()
