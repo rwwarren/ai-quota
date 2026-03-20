@@ -22,3 +22,13 @@ def read_cache(path: str) -> list[dict]:
         return data.get("entries", [])
     except (FileNotFoundError, json.JSONDecodeError, KeyError):
         return []
+
+
+def read_cache_updated(path: str) -> float | None:
+    """Return the Unix timestamp when the cache was last written, or None."""
+    try:
+        with open(path) as f:
+            data = json.load(f)
+        return data.get("updated")
+    except (FileNotFoundError, json.JSONDecodeError):
+        return None

@@ -46,6 +46,21 @@ def get_usage(provider: str, *, cached: bool = True) -> list[dict]:
     return mod.fetch_live()  # type: ignore[attr-defined]
 
 
+def get_cache_last_checked(provider: str) -> float | None:
+    """Return the Unix timestamp when the cache was last written, or None.
+
+    Args:
+        provider: One of ``"claude"``, ``"gemini"``, ``"codex"``.
+
+    Returns:
+        A float Unix timestamp, or ``None`` if no cache exists yet.
+    """
+    mod = _PROVIDERS.get(provider)
+    if mod is None:
+        raise ValueError(f"Unknown provider {provider!r}. Choose from: {list(_PROVIDERS)}")
+    return mod.read_cache_last_checked()  # type: ignore[attr-defined]
+
+
 def is_exhausted(provider: str) -> bool:
     """Return ``True`` if *provider*'s quota is at or above 100%.
 
