@@ -1,4 +1,4 @@
-"""ai_quota — check Claude / Gemini / Codex quota usage and cache results.
+"""ai_quota — check Claude / Gemini / Codex / Groq quota usage and cache results.
 
 Quick start::
 
@@ -12,16 +12,17 @@ Quick start::
         if is_exhausted("gemini"):
             use_codex()
 
-Provider keys: ``"claude"``, ``"gemini"``, ``"codex"``
+Provider keys: ``"claude"``, ``"gemini"``, ``"codex"``, ``"groq"``
 """
 from __future__ import annotations
 
-from ai_quota.providers import claude, codex, gemini
+from ai_quota.providers import claude, codex, gemini, groq
 
 _PROVIDERS: dict[str, object] = {
     "claude": claude,
     "gemini": gemini,
     "codex": codex,
+    "groq": groq,
 }
 
 
