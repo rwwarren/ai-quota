@@ -5,6 +5,7 @@ Usage::
     ai-quota claude [--json | --short | --slack | --pretty]
     ai-quota gemini [--json | --short | --slack]
     ai-quota codex  [--json | --short | --slack | --pretty]
+    ai-quota groq   [--json | --short | --slack]
     ai-quota all    [--short | --slack | --refresh]   # all providers
 
     # Use cached data (instant, no subprocess)
@@ -18,9 +19,9 @@ from __future__ import annotations
 import json
 import sys
 
-from ai_quota.providers import claude, codex, gemini
+from ai_quota.providers import claude, codex, gemini, groq
 
-_MODS = {"claude": claude, "gemini": gemini, "codex": codex}
+_MODS = {"claude": claude, "gemini": gemini, "codex": codex, "groq": groq}
 
 
 def _usage_and_exit() -> None:
