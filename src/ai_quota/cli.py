@@ -16,9 +16,13 @@ Usage::
 from __future__ import annotations
 
 import json
+import os
 import sys
+from concurrent.futures import ThreadPoolExecutor, TimeoutError
 
 from ai_quota.providers import claude, codex, gemini
+
+PROVIDER_TIMEOUT = int(os.environ.get("AI_QUOTA_PROVIDER_TIMEOUT", "60"))
 
 _MODS = {"claude": claude, "gemini": gemini, "codex": codex}
 
@@ -83,12 +87,23 @@ def _print(mod, entries: list[dict], fmt: str) -> None:
         print(mod.fmt_short(entries))
 
 
+def _fetch_with_timeout(name: str, mod, timeout: int) -> list[dict]:
+    """Run a provider's fetch_live() with a hard timeout."""
+    with ThreadPoolExecutor(max_workers=1) as pool:
+        future = pool.submit(mod.fetch_live)
+        try:
+            return future.result(timeout=timeout)
+        except TimeoutError:
+            print(f"{name}: timed out after {timeout}s", file=sys.stderr)
+            return []
+
+
 def _run_all(args: list[str]) -> None:
     fmt = args[0] if args else "--short"
 
     if fmt == "--refresh":
         for name, mod in _MODS.items():
-            entries = mod.fetch_live()
+            entries = _fetch_with_timeout(name, mod, PROVIDER_TIMEOUT)
             if entries:
                 mod.write_cache(entries)
                 print(f"{name}: {mod.fmt_short(entries)}")

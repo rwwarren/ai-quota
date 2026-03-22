@@ -23,6 +23,7 @@ from ai_quota.cache import write_cache as _write
 from ai_quota.formatters import fmt_bar, fmt_reset
 
 CACHE_FILE = os.environ.get("CODEX_USAGE_CACHE", "/tmp/codex-usage.cache")
+TIMEOUT = int(os.environ.get("CODEX_USAGE_TIMEOUT", "30"))
 CODEX_STATE_DB = os.path.expanduser(
     os.environ.get("CODEX_STATE_DB", "~/.codex/state_5.sqlite")
 )
@@ -56,6 +57,18 @@ def _spawn_codex_and_read() -> str:
 
     import pyte
 
+    deadline = time.monotonic() + TIMEOUT
+
+    def _check_deadline() -> None:
+        if time.monotonic() >= deadline:
+            raise TimeoutError(f"codex TUI interaction exceeded {TIMEOUT}s")
+
+    def _sleep(secs: float) -> None:
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            raise TimeoutError(f"codex TUI interaction exceeded {TIMEOUT}s")
+        time.sleep(min(secs, remaining))
+
     master, slave = pty.openpty()
     winsize = struct.pack("HHHH", 80, 250, 0, 0)
     fcntl.ioctl(slave, termios.TIOCSWINSZ, winsize)
@@ -75,35 +88,39 @@ def _spawn_codex_and_read() -> str:
         raise
     os.close(slave)
 
-    output = b""
-    output += _read_pty(master, 4)
-    os.write(master, b"\x1b[1;1R")
-    time.sleep(0.3)
-    os.write(master, b"\x1b[?62;c")
-    time.sleep(0.3)
-    os.write(master, b"\x1b]10;rgb:0000/0000/0000\x1b\\")
-    time.sleep(2)
-    output += _read_pty(master, 3)
+    try:
+        output = b""
+        output += _read_pty(master, 4)
+        _check_deadline()
+        os.write(master, b"\x1b[1;1R")
+        _sleep(0.3)
+        os.write(master, b"\x1b[?62;c")
+        _sleep(0.3)
+        os.write(master, b"\x1b]10;rgb:0000/0000/0000\x1b\\")
+        _sleep(2)
+        output += _read_pty(master, 3)
+        _check_deadline()
 
-    for c in "/status":
-        os.write(master, c.encode())
-        time.sleep(0.4)
-    output += _read_pty(master, 1)
-    os.write(master, b"\r")
-    output += _read_pty(master, 5)
+        for c in "/status":
+            os.write(master, c.encode())
+            _sleep(0.4)
+        output += _read_pty(master, 1)
+        _check_deadline()
+        os.write(master, b"\r")
+        output += _read_pty(master, 5)
+    finally:
+        os.kill(proc.pid, signal.SIGTERM)
+        try:
+            proc.wait(timeout=3)
+        except subprocess.TimeoutExpired:
+            proc.kill()
+            proc.wait()
+        os.close(master)
 
     screen = pyte.Screen(columns=250, lines=80)
     stream = pyte.Stream(screen)
     stream.feed(output.decode("utf-8", errors="replace"))
     rendered = "\n".join(line.rstrip() for line in screen.display)
-
-    os.kill(proc.pid, signal.SIGTERM)
-    try:
-        proc.wait(timeout=3)
-    except subprocess.TimeoutExpired:
-        proc.kill()
-        proc.wait()
-    os.close(master)
     return rendered
 
 
