@@ -16,7 +16,7 @@ from ai_quota.formatters import fmt_bar, fmt_reset
 
 CACHE_FILE = os.environ.get("CLAUDE_USAGE_CACHE", "/tmp/cc-usage-pct.cache")
 TIMEOUT = int(os.environ.get("CLAUDE_USAGE_TIMEOUT", "30"))
-WORK_DIR = os.environ.get("CLAUDE_USAGE_DIR", os.path.expanduser("~"))
+WORK_DIR = os.environ.get("CLAUDE_USAGE_DIR", os.path.expanduser("~/Projects/todos-automation"))
 ROWS = 60
 COLS = 120
 
@@ -149,6 +149,46 @@ def _parse_reset_ts(raw: str) -> str | None:
     return target.isoformat() if target else None
 
 
+def parse_status_bar(lines: list[str]) -> list[dict]:
+    """Fallback parser for the Claude Code status bar.
+
+    Matches patterns like::
+
+        [███░░░░░░░] 34% 3h 59m (3:00 AM) | week: 75% 22h 59m (10:00 PM)
+    """
+    for line in lines:
+        if "%" not in line:
+            continue
+        # session entry: [bar] NN% Xh Ym (H:MM AM)
+        entries = []
+        m_session = re.search(
+            r"\[[\S ]+?\]\s*(\d+)%\s+\S+\s+\S+\s+\((\d{1,2}:\d{2}\s*[AP]M)\)",
+            line, re.IGNORECASE,
+        )
+        if m_session:
+            entries.append({
+                "label": "session",
+                "percent": int(m_session.group(1)),
+                "reset_ts": _parse_reset_ts(f"Resets {m_session.group(2)}"),
+                "cost": "",
+            })
+        # week entry: week: NN% Xh Ym (H:MM AM)
+        m_week = re.search(
+            r"week:\s*(\d+)%\s+\S+\s+\S+\s+\((\d{1,2}:\d{2}\s*[AP]M)\)",
+            line, re.IGNORECASE,
+        )
+        if m_week:
+            entries.append({
+                "label": "week",
+                "percent": int(m_week.group(1)),
+                "reset_ts": _parse_reset_ts(f"Resets {m_week.group(2)}"),
+                "cost": "",
+            })
+        if entries:
+            return entries
+    return []
+
+
 # ---------------------------------------------------------------------------
 # Live fetch (requires `claude` CLI + pexpect/pyte)
 # ---------------------------------------------------------------------------
@@ -166,7 +206,7 @@ def fetch_live() -> list[dict]:
 
     while True:
         i = child.expect(
-            [r"Yes.*trust", r"[❯>╭]", pexpect.TIMEOUT, pexpect.EOF],
+            [r"Yes.*trust|trust this folder", r"❯", pexpect.TIMEOUT, pexpect.EOF],
             timeout=TIMEOUT,
         )
         if i == 0:
@@ -177,22 +217,27 @@ def fetch_live() -> list[dict]:
             print("Timed out waiting for Claude prompt", file=sys.stderr)
             sys.exit(1)
 
+    # Drain startup output into the screen so we capture the status bar
     try:
         while True:
             child.expect(r".+", timeout=1)
+            raw = child.match.group(0) if child.match else ""
+            if raw:
+                stream.feed(raw)
     except pexpect.TIMEOUT:
         pass
 
-    screen.reset()
-    time.sleep(0.5)
-    child.send("/usage")
-    time.sleep(1)
-    child.send("\r")
+    # Capture initial screen (has status bar) as fallback
+    initial_lines = [screen.display[r].rstrip() for r in range(ROWS) if screen.display[r].rstrip()]
 
-    deadline = time.time() + 10
+    screen.reset()
+    time.sleep(0.3)
+    child.send("/usage\r")
+
+    deadline = time.time() + 15
     while time.time() < deadline:
         try:
-            child.expect(r".+", timeout=1)
+            child.expect(r".+", timeout=2)
             raw = child.match.group(0) if child.match else ""
             if raw:
                 stream.feed(raw)
@@ -202,6 +247,8 @@ def fetch_live() -> list[dict]:
             break
 
     lines = [screen.display[r].rstrip() for r in range(ROWS) if screen.display[r].rstrip()]
+    if not lines:
+        lines = initial_lines
 
     child.sendline("/exit")
     try:
@@ -213,7 +260,10 @@ def fetch_live() -> list[dict]:
         for idx, line in enumerate(lines):
             print(f"[{idx:3d}] {line!r}", file=sys.stderr)
 
-    return parse_usage(lines)
+    entries = parse_usage(lines)
+    if not entries:
+        entries = parse_status_bar(lines)
+    return entries
 
 
 # ---------------------------------------------------------------------------
