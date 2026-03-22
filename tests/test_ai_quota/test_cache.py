@@ -2,7 +2,7 @@
 import json
 import os
 
-from ai_quota.cache import read_cache, write_cache
+from ai_quota.cache import read_cache, read_cache_updated, write_cache
 
 
 class TestWriteCache:
@@ -45,3 +45,28 @@ class TestReadCache:
         path = str(tmp_path / "empty.cache")
         write_cache(path, [])
         assert read_cache(path) == []
+
+
+class TestReadCacheUpdated:
+    def test_returns_timestamp_after_write(self, tmp_path):
+        import time
+        path = str(tmp_path / "test.cache")
+        before = time.time()
+        write_cache(path, [{"label": "session", "percent": 50}])
+        after = time.time()
+        ts = read_cache_updated(path)
+        assert ts is not None
+        assert before <= ts <= after
+
+    def test_missing_file_returns_none(self, tmp_path):
+        assert read_cache_updated(str(tmp_path / "nonexistent.cache")) is None
+
+    def test_corrupt_json_returns_none(self, tmp_path):
+        path = str(tmp_path / "bad.cache")
+        (tmp_path / "bad.cache").write_text("not json")
+        assert read_cache_updated(path) is None
+
+    def test_missing_updated_key_returns_none(self, tmp_path):
+        path = str(tmp_path / "no_updated.cache")
+        (tmp_path / "no_updated.cache").write_text(json.dumps({"entries": []}))
+        assert read_cache_updated(path) is None

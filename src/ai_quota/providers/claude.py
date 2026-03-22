@@ -11,6 +11,7 @@ import time
 from datetime import datetime, timedelta
 
 from ai_quota.cache import read_cache as _read
+from ai_quota.cache import read_cache_updated as _read_updated
 from ai_quota.cache import write_cache as _write
 from ai_quota.formatters import fmt_bar, fmt_reset
 
@@ -272,6 +273,10 @@ def fetch_live() -> list[dict]:
 
 def read_cache() -> list[dict]:
     return _read(CACHE_FILE)
+
+
+def read_cache_last_checked() -> float | None:
+    return _read_updated(CACHE_FILE)
 
 
 def write_cache(entries: list[dict]) -> None:
