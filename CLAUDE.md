@@ -2,7 +2,7 @@
 
 ## Project
 
-Unified CLI and Python API for monitoring quota usage across AI coding assistants (Claude Code, Gemini CLI, Codex). Spawns each provider's CLI in a PTY, parses terminal output via `pyte`, and caches results as atomic JSON.
+Unified CLI and Python API for monitoring quota usage across AI coding assistants (Claude Code, Gemini CLI, Codex, Kilo). Spawns each provider's CLI in a PTY (or subprocess), parses terminal output via `pyte` or regex, and caches results as atomic JSON.
 
 ## Stack
 
@@ -41,6 +41,7 @@ src/ai_quota/
     claude.py          # Claude Code provider (PTY + /usage)
     gemini.py          # Gemini CLI provider (PTY + /stats)
     codex.py           # Codex provider (PTY + /status + SQLite)
+    kilo.py            # Kilo provider (subprocess + stats)
 tests/test_ai_quota/   # pytest suite
 bin/statusline.sh      # Claude Code terminal status line formatter
 ```

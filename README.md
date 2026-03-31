@@ -3,16 +3,16 @@
 [![CI](https://github.com/rwwarren/ai-quota/actions/workflows/ci.yml/badge.svg)](https://github.com/rwwarren/ai-quota/actions/workflows/ci.yml)
 [![codecov](https://codecov.io/gh/rwwarren/ai-quota/branch/main/graph/badge.svg)](https://codecov.io/gh/rwwarren/ai-quota)
 
-Unified CLI and Python API for monitoring quota usage across AI coding assistants: **Claude Code**, **Gemini CLI**, and **Codex**.
+Unified CLI and Python API for monitoring quota usage across AI coding assistants: **Claude Code**, **Gemini CLI**, **Codex**, and **Kilo**.
 
 ## Features
 
-- **Multi-provider** — Query Claude Code, Gemini, and Codex from one tool
+- **Multi-provider** — Query Claude Code, Gemini, Codex, and Kilo from one tool
 - **CLI + Python API** — Use from the terminal or import in scripts
 - **Caching** — Atomic JSON cache for instant reads; refresh on demand
 - **Multiple output formats** — Plain text, JSON, Slack-friendly markdown, pretty progress bars
-- **Reset countdowns** — Shows when quota resets in relative and absolute time
-- **Token tracking** — Codex provider reads local SQLite DB for token counts
+- **Reset countdowns** — Shows when quota resets in relative and absolute time (where available)
+- **Token tracking** — Codex and Kilo providers track token usage and costs
 - **Status line** — Bash script for Claude Code terminal status line integration
 
 ## Installation
@@ -36,6 +36,7 @@ Requires Python 3.11+.
 ai-quota claude [--json | --short | --slack | --pretty]
 ai-quota gemini [--json | --short | --slack]
 ai-quota codex  [--json | --short | --slack | --pretty]
+ai-quota kilo   [--json | --short | --slack]
 
 # Check all providers
 ai-quota all [--short | --slack]
@@ -76,6 +77,7 @@ Each provider spawns its respective CLI tool in a PTY, sends a status command (`
 | Claude | `claude` | `/usage` | Cost breakdown |
 | Gemini | `gemini` | `/stats` | Model name |
 | Codex | `codex` | `/status` | Token counts via SQLite |
+| Kilo | `kilo` | `stats` | Costs, tokens, and tool usage |
 
 ## Configuration
 

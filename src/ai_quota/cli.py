@@ -5,6 +5,7 @@ Usage::
     ai-quota claude [--json | --short | --slack | --pretty]
     ai-quota gemini [--json | --short | --slack]
     ai-quota codex  [--json | --short | --slack | --pretty]
+    ai-quota kilo   [--json | --short | --slack]
     ai-quota all    [--short | --slack | --refresh]   # all providers
 
     # Use cached data (instant, no subprocess)
@@ -20,11 +21,11 @@ import os
 import sys
 from concurrent.futures import ThreadPoolExecutor, TimeoutError
 
-from ai_quota.providers import claude, codex, gemini
+from ai_quota.providers import claude, codex, gemini, kilo
 
 PROVIDER_TIMEOUT = int(os.environ.get("AI_QUOTA_PROVIDER_TIMEOUT", "60"))
 
-_MODS = {"claude": claude, "gemini": gemini, "codex": codex}
+_MODS = {"claude": claude, "gemini": gemini, "codex": codex, "kilo": kilo}
 
 
 def _usage_and_exit() -> None:

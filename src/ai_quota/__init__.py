@@ -12,16 +12,17 @@ Quick start::
         if is_exhausted("gemini"):
             use_codex()
 
-Provider keys: ``"claude"``, ``"gemini"``, ``"codex"``
+Provider keys: ``"claude"``, ``"gemini"``, ``"codex"``, ``"kilo"``
 """
 from __future__ import annotations
 
-from ai_quota.providers import claude, codex, gemini
+from ai_quota.providers import claude, codex, gemini, kilo
 
 _PROVIDERS: dict[str, object] = {
     "claude": claude,
     "gemini": gemini,
     "codex": codex,
+    "kilo": kilo,
 }
 
 
@@ -29,7 +30,7 @@ def get_usage(provider: str, *, cached: bool = True) -> list[dict]:
     """Return quota entries for *provider*.
 
     Args:
-        provider: One of ``"claude"``, ``"gemini"``, ``"codex"``.
+        provider: One of ``"claude"``, ``"gemini"``, ``"codex"``, ``"kilo"``.
         cached:   If ``True`` (default), read from the local cache file.
                   If ``False``, spawn the CLI tool live.
 
@@ -37,6 +38,7 @@ def get_usage(provider: str, *, cached: bool = True) -> list[dict]:
         A list of dicts.  Claude entries have keys ``label``, ``percent``,
         ``reset_ts``, ``cost``; Gemini/Codex entries have ``model``,
         ``used_pct``, ``reset_ts`` (plus token counts for Codex).
+        Kilo entries have ``total_cost``, ``input_tokens``, etc.
     """
     mod = _PROVIDERS.get(provider)
     if mod is None:
