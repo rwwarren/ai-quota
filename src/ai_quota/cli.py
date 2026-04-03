@@ -100,9 +100,11 @@ def _fetch_with_timeout(name: str, mod, timeout: int) -> list[dict]:
 
 
 def _run_all(args: list[str]) -> None:
-    fmt = args[0] if args else "--short"
+    refresh = "--refresh" in args
+    remaining = [a for a in args if a != "--refresh"]
+    fmt = remaining[0] if remaining else "--short"
 
-    if fmt == "--refresh":
+    if refresh:
         for name, mod in _MODS.items():
             entries = _fetch_with_timeout(name, mod, PROVIDER_TIMEOUT)
             if entries:
