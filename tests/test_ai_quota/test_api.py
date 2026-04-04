@@ -1,4 +1,4 @@
-"""Tests for the public ai_quota API: get_usage() and is_exhausted()."""
+"""Tests for the public ai_quota API: get_usage(), is_exhausted(), get_cache_last_checked()."""
 from unittest.mock import patch
 
 import pytest
@@ -67,3 +67,17 @@ class TestIsExhausted:
         entries = [{"model": "gpt-5.2-codex", "used_pct": 100.0, "reset_ts": None}]
         with patch("ai_quota.codex.read_cache", return_value=entries):
             assert ai_quota.is_exhausted("codex") is True
+
+
+class TestGetCacheLastChecked:
+    def test_valid_provider(self):
+        with patch("ai_quota.claude.read_cache_last_checked", return_value=1700000000.0):
+            assert ai_quota.get_cache_last_checked("claude") == 1700000000.0
+
+    def test_invalid_provider_raises(self):
+        with pytest.raises(ValueError, match="Unknown provider"):
+            ai_quota.get_cache_last_checked("openai")
+
+    def test_returns_none_when_no_cache(self):
+        with patch("ai_quota.gemini.read_cache_last_checked", return_value=None):
+            assert ai_quota.get_cache_last_checked("gemini") is None

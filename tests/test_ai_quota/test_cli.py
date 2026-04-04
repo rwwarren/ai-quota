@@ -1,10 +1,12 @@
 """Tests for ai_quota.cli — CLI entrypoint."""
 import json
+import time
 from unittest.mock import patch
 
 import pytest
 
 from ai_quota.cli import main
+from ai_quota.providers import claude
 
 
 class TestMainUsage:
@@ -94,3 +96,78 @@ class TestMainAll:
         main(["all", "--slack"])
         out = capsys.readouterr().out
         assert "Claude Code Usage" in out
+
+
+class TestCliPrintFallback:
+    """_print falls back to fmt_short for unknown format flags."""
+
+    @patch("ai_quota.providers.claude.fetch_live")
+    def test_unknown_format_falls_back_to_short(self, mock_fetch, capsys):
+        mock_fetch.return_value = [
+            {"label": "session", "percent": 42, "reset_ts": None, "cost": ""}
+        ]
+        main(["claude", "--bogus"])
+        out = capsys.readouterr().out
+        assert "session: 42%" in out
+
+
+class TestFetchWithTimeout:
+    """_fetch_with_timeout."""
+
+    @patch("ai_quota.providers.claude.fetch_live")
+    def test_timeout_returns_empty(self, mock_fetch, capsys):
+        def slow():
+            time.sleep(5)
+            return [{"label": "x"}]
+
+        mock_fetch.side_effect = slow
+        from ai_quota.cli import _fetch_with_timeout
+
+        result = _fetch_with_timeout("claude", claude, timeout=0)
+        assert result == []
+
+
+class TestRunAllRefresh:
+    """_run_all with --refresh."""
+
+    @patch("ai_quota.cli._fetch_with_timeout")
+    def test_refresh_writes_cache_and_prints(self, mock_timeout, capsys):
+        def per_provider(name, mod, timeout):
+            if name == "claude":
+                return [{"label": "session", "percent": 55, "reset_ts": None, "cost": ""}]
+            if name == "gemini":
+                return [{"model": "flash", "used_pct": 30.0, "reset_ts": None}]
+            if name == "codex":
+                return [{"model": "codex", "used_pct": 10, "reset_ts": None,
+                         "today_tokens": 0, "today_sessions": 0,
+                         "all_time_tokens": 0, "all_time_sessions": 0}]
+            return []
+
+        mock_timeout.side_effect = per_provider
+        with patch("ai_quota.providers.claude.write_cache"), \
+             patch("ai_quota.providers.gemini.write_cache"), \
+             patch("ai_quota.providers.codex.write_cache"), \
+             patch("ai_quota.providers.kilo.write_cache"), \
+             patch("ai_quota.providers.lmstudio.write_cache"):
+            main(["all", "--refresh"])
+        out = capsys.readouterr().out
+        assert "claude:" in out
+
+    @patch("ai_quota.cli._fetch_with_timeout")
+    def test_refresh_no_data_prints_stderr(self, mock_timeout, capsys):
+        mock_timeout.return_value = []
+        main(["all", "--refresh"])
+        err = capsys.readouterr().err
+        assert "no usage data" in err
+
+
+class TestMainModule:
+    """__main__.py and cli.py __name__ guards."""
+
+    def test_run_as_module(self):
+        import subprocess
+        result = subprocess.run(
+            [".venv/bin/python3", "-m", "ai_quota"],
+            capture_output=True, text=True,
+        )
+        assert result.returncode == 1

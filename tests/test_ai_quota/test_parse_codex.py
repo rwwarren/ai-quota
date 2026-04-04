@@ -1,6 +1,9 @@
 """Tests for ai_quota.providers.codex — pure parsing functions only."""
+import sqlite3
 from datetime import datetime, timedelta
+from unittest.mock import patch
 
+from ai_quota.providers import codex
 from ai_quota.providers.codex import _parse_reset_ts, parse_tui_output
 
 # ---------------------------------------------------------------------------
@@ -85,3 +88,82 @@ class TestParseResetTs:
         assert ts is not None
         dt = datetime.fromisoformat(ts)
         assert dt > datetime.now()
+
+
+# ---------------------------------------------------------------------------
+# _query_db
+# ---------------------------------------------------------------------------
+
+class TestCodexQueryDb:
+    """_query_db success path."""
+
+    def test_query_db_with_data(self, tmp_path):
+        db_path = tmp_path / "state.sqlite"
+        conn = sqlite3.connect(str(db_path))
+        conn.execute("CREATE TABLE threads (tokens_used INTEGER, created_at INTEGER)")
+        now_ts = int(datetime.now().timestamp())
+        conn.execute("INSERT INTO threads VALUES (100, ?)", (now_ts,))
+        conn.execute("INSERT INTO threads VALUES (200, ?)", (now_ts + 10,))
+        conn.commit()
+        conn.close()
+
+        with patch.object(codex, "CODEX_STATE_DB", str(db_path)):
+            result = codex._query_db()
+        assert result is not None
+        assert result["today_tokens"] == 300
+        assert result["today_sessions"] == 2
+        assert result["all_time_tokens"] == 300
+        assert result["all_time_sessions"] == 2
+
+
+class TestCodexQueryDbException:
+    """Exception in _query_db returns None."""
+
+    def test_corrupt_db_returns_none(self, tmp_path):
+        db_path = tmp_path / "state.sqlite"
+        db_path.write_text("not a database")
+        with patch.object(codex, "CODEX_STATE_DB", str(db_path)):
+            result = codex._query_db()
+        assert result is None
+
+
+class TestCodexReadCacheLastChecked:
+    def test_delegates_to_cache(self, tmp_path):
+        from ai_quota.cache import write_cache
+        cache_file = str(tmp_path / "test.cache")
+        write_cache(cache_file, [{"model": "codex"}])
+        with patch.object(codex, "CACHE_FILE", cache_file):
+            result = codex.read_cache_last_checked()
+        assert isinstance(result, float)
+
+
+class TestCodexFmtSlackResetLine:
+    """fmt_slack includes reset line when reset_ts is set."""
+
+    def test_slack_with_reset(self):
+        future = (datetime.now() + timedelta(hours=3)).isoformat()
+        entries = [{
+            "model": "codex",
+            "used_pct": 45,
+            "reset_ts": future,
+            "today_tokens": 500,
+            "today_sessions": 2,
+            "all_time_tokens": 1000,
+            "all_time_sessions": 5,
+        }]
+        out = codex.fmt_slack(entries)
+        assert "Codex" in out
+        assert "_" in out
+
+    def test_slack_with_none_pct_shows_unknown(self):
+        entries = [{
+            "model": "codex",
+            "used_pct": None,
+            "reset_ts": None,
+            "today_tokens": 0,
+            "today_sessions": 0,
+            "all_time_tokens": 0,
+            "all_time_sessions": 0,
+        }]
+        out = codex.fmt_slack(entries)
+        assert "unknown" in out
