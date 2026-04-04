@@ -15,7 +15,7 @@ class TestParseUsage:
         entries = parse_usage(raw)
         assert len(entries) == 1
         assert entries[0]["model"] == "gemini-2.0-flash"
-        assert entries[0]["used_pct"] == pytest.approx(25.0)
+        assert entries[0]["used_pct"] == pytest.approx(75.0)
 
     def test_skips_header_words(self):
         raw = "model  1000  75%\ngemini-2.0-pro  500  60%"
@@ -26,7 +26,7 @@ class TestParseUsage:
         raw = "│gemini-2.0-flash│ 1000 │ 50.0% │"
         entries = parse_usage(raw)
         assert len(entries) == 1
-        assert entries[0]["used_pct"] == pytest.approx(50.0)
+        assert entries[0]["used_pct"] == pytest.approx(50.0)  # 50% used is 50% either way
 
     def test_empty_raw_returns_empty(self):
         assert parse_usage("") == []
@@ -51,7 +51,7 @@ class TestParseUsage:
         entries = parse_usage(raw)
         assert len(entries) == 1
         assert entries[0]["model"] == "gemini-2.5-flash"
-        assert entries[0]["used_pct"] == pytest.approx(98.0)
+        assert entries[0]["used_pct"] == pytest.approx(2.0)
 
     def test_new_reset_format_time_with_duration(self):
         raw = "gemini-2.5-flash  -  ▬▬▬▬  2%  10:10 PM (2h 56m)"

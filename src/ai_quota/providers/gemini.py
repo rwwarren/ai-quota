@@ -37,8 +37,7 @@ def parse_usage(raw: str) -> list[dict]:
             if model.lower() in ["model", "reqs", "usage", "total"]:
                 continue
             try:
-                rem = float(match.group(2))
-                used_pct = 100.0 - rem
+                used_pct = float(match.group(2))
                 reset = "Unknown"
                 # Old format: "resets in 3h 24m"
                 reset_match = re.search(r"(resets in [^│\n]+)", line)
