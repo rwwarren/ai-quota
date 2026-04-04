@@ -166,8 +166,9 @@ class TestMainModule:
 
     def test_run_as_module(self):
         import subprocess
+        import sys
         result = subprocess.run(
-            [".venv/bin/python3", "-m", "ai_quota"],
+            [sys.executable, "-m", "ai_quota"],
             capture_output=True, text=True,
         )
         assert result.returncode == 1
