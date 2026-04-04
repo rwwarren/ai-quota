@@ -7,7 +7,6 @@ from __future__ import annotations
 import os
 import re
 import subprocess
-from datetime import datetime
 
 from ai_quota.cache import read_cache as _read
 from ai_quota.cache import read_cache_updated as _read_updated

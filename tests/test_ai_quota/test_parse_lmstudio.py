@@ -1,8 +1,7 @@
 import json
-import pytest
 from pathlib import Path
 
-from ai_quota.providers.lmstudio import parse_conversations, fmt_short, fmt_slack
+from ai_quota.providers.lmstudio import fmt_short, fmt_slack, parse_conversations
 
 
 def _write_conversation(tmp_path: Path, filename: str, data: dict) -> None:

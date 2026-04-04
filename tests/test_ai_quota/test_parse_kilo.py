@@ -1,5 +1,5 @@
-import pytest
 from ai_quota.providers.kilo import parse_usage
+
 
 def test_parse_usage_full():
     raw = """
