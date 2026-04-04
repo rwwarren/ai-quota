@@ -12,17 +12,18 @@ Quick start::
         if is_exhausted("gemini"):
             use_codex()
 
-Provider keys: ``"claude"``, ``"gemini"``, ``"codex"``, ``"kilo"``
+Provider keys: ``"claude"``, ``"gemini"``, ``"codex"``, ``"kilo"``, ``"lmstudio"``
 """
 from __future__ import annotations
 
-from ai_quota.providers import claude, codex, gemini, kilo
+from ai_quota.providers import claude, codex, gemini, kilo, lmstudio
 
 _PROVIDERS: dict[str, object] = {
     "claude": claude,
     "gemini": gemini,
     "codex": codex,
     "kilo": kilo,
+    "lmstudio": lmstudio,
 }
 
 
