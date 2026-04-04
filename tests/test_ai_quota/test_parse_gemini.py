@@ -46,6 +46,31 @@ class TestParseUsage:
         entries = parse_usage(raw)
         assert len(entries) == 2
 
+    def test_bar_with_black_rectangle_chars(self):
+        raw = "gemini-2.5-flash           -    ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬    2%  10:10 PM (2h 56m)"
+        entries = parse_usage(raw)
+        assert len(entries) == 1
+        assert entries[0]["model"] == "gemini-2.5-flash"
+        assert entries[0]["used_pct"] == pytest.approx(98.0)
+
+    def test_new_reset_format_time_with_duration(self):
+        raw = "gemini-2.5-flash  -  ▬▬▬▬  2%  10:10 PM (2h 56m)"
+        entries = parse_usage(raw)
+        assert len(entries) == 1
+        assert entries[0]["reset_ts"] is not None
+        dt = datetime.fromisoformat(entries[0]["reset_ts"])
+        expected = datetime.now() + timedelta(hours=2, minutes=56)
+        assert abs((dt - expected).total_seconds()) < 5
+
+    def test_new_reset_format_24h(self):
+        raw = "gemini-2.5-pro  -  ▬▬▬▬  0%  7:15 PM (24h)"
+        entries = parse_usage(raw)
+        assert len(entries) == 1
+        assert entries[0]["reset_ts"] is not None
+        dt = datetime.fromisoformat(entries[0]["reset_ts"])
+        expected = datetime.now() + timedelta(hours=24)
+        assert abs((dt - expected).total_seconds()) < 5
+
 
 # ---------------------------------------------------------------------------
 # _parse_reset_ts

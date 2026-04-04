@@ -30,7 +30,7 @@ def parse_usage(raw: str) -> list[dict]:
     pattern = re.compile(r"([\w\.-]+)\s+[\d,.-]+\s+(\d+\.?\d*)\s*%")
 
     for line in raw.splitlines():
-        clean = re.sub(r"[│┤┐└┴┬├─┼█░┃┏┓┗┛┣┫┳┻╋━]", " ", line)
+        clean = re.sub(r"[│┤┐└┴┬├─┼█░┃┏┓┗┛┣┫┳┻╋━▬]", " ", line)
         match = pattern.search(clean)
         if match:
             model = match.group(1).strip()
@@ -40,9 +40,15 @@ def parse_usage(raw: str) -> list[dict]:
                 rem = float(match.group(2))
                 used_pct = 100.0 - rem
                 reset = "Unknown"
+                # Old format: "resets in 3h 24m"
                 reset_match = re.search(r"(resets in [^│\n]+)", line)
                 if reset_match:
                     reset = reset_match.group(1).strip()
+                else:
+                    # New format: "10:10 PM (2h 56m)" or "7:15 PM (24h)"
+                    dur_match = re.search(r"\d+:\d+\s*[AP]M\s*\(([^)]+)\)", line)
+                    if dur_match:
+                        reset = f"resets in {dur_match.group(1).strip()}"
                 entries.append({
                     "model": model,
                     "used_pct": used_pct,
