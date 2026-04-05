@@ -157,9 +157,4 @@ def fmt_slack(entries: list[dict]) -> str:
         lines.append(f"• Last Model: `{last['model']}`")
         lines.append(f"• Last Usage: {_relative_time(last.get('time'))}")
 
-    cache_ts = read_cache_last_checked()
-    if cache_ts:
-        refreshed_dt = datetime.fromtimestamp(cache_ts)
-        lines.append(f"_Last refreshed: {_relative_time(refreshed_dt.isoformat())}_")
-
     return "\n".join(lines)
