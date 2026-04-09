@@ -1,4 +1,4 @@
-"""ai_quota — check Claude / Gemini / Codex quota usage and cache results.
+"""ai_quota — check Claude / Gemini / Codex / OpenCode quota usage and cache results.
 
 Quick start::
 
@@ -12,11 +12,11 @@ Quick start::
         if is_exhausted("gemini"):
             use_codex()
 
-Provider keys: ``"claude"``, ``"gemini"``, ``"codex"``, ``"kilo"``, ``"lmstudio"``
+Provider keys: ``"claude"``, ``"gemini"``, ``"codex"``, ``"kilo"``, ``"lmstudio"``, ``"opencode"``
 """
 from __future__ import annotations
 
-from ai_quota.providers import claude, codex, gemini, kilo, lmstudio
+from ai_quota.providers import claude, codex, gemini, kilo, lmstudio, opencode
 
 _PROVIDERS: dict[str, object] = {
     "claude": claude,
@@ -24,6 +24,7 @@ _PROVIDERS: dict[str, object] = {
     "codex": codex,
     "kilo": kilo,
     "lmstudio": lmstudio,
+    "opencode": opencode,
 }
 
 
