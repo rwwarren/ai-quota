@@ -1,5 +1,4 @@
 import json
-import time
 from datetime import datetime, timedelta
 from pathlib import Path
 from unittest.mock import patch
@@ -255,8 +254,7 @@ class TestLmstudioFmtSlack:
                 "time": datetime.now().isoformat(),
             },
         }]
-        with patch.object(lmstudio, "read_cache_last_checked", return_value=None):
-            out = lmstudio.fmt_slack(entries)
+        out = lmstudio.fmt_slack(entries)
         assert "TestModel" in out
         assert "Last Usage" in out
 
@@ -266,9 +264,9 @@ class TestLmstudioFmtSlack:
             "total_predicted_tokens": 500,
             "cumulative_total": 1500,
         }]
-        with patch.object(lmstudio, "read_cache_last_checked", return_value=time.time()):
-            out = lmstudio.fmt_slack(entries)
-        assert "Last refreshed" in out
+        out = lmstudio.fmt_slack(entries)
+        assert "LM Studio Usage" in out
+        assert "Last refreshed" not in out
 
 
 class TestLmstudioParseSelectedIdx:

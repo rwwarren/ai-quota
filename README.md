@@ -3,11 +3,11 @@
 [![CI](https://github.com/rwwarren/ai-quota/actions/workflows/ci.yml/badge.svg)](https://github.com/rwwarren/ai-quota/actions/workflows/ci.yml)
 [![codecov](https://codecov.io/gh/rwwarren/ai-quota/branch/main/graph/badge.svg)](https://codecov.io/gh/rwwarren/ai-quota)
 
-Unified CLI and Python API for monitoring quota usage across AI coding assistants: **Claude Code**, **Gemini CLI**, **Codex**, and **Kilo**.
+Unified CLI and Python API for monitoring quota usage across AI coding assistants: **Claude Code**, **Gemini CLI**, **Codex**, **Kilo**, **LM Studio**, and **OpenCode**.
 
 ## Features
 
-- **Multi-provider** — Query Claude Code, Gemini, Codex, and Kilo from one tool
+- **Multi-provider** — Query Claude Code, Gemini, Codex, Kilo, LM Studio, and OpenCode from one tool
 - **CLI + Python API** — Use from the terminal or import in scripts
 - **Caching** — Atomic JSON cache for instant reads; refresh on demand
 - **Multiple output formats** — Plain text, JSON, Slack-friendly markdown, pretty progress bars
@@ -36,7 +36,9 @@ Requires Python 3.11+.
 ai-quota claude [--json | --short | --slack | --pretty]
 ai-quota gemini [--json | --short | --slack]
 ai-quota codex  [--json | --short | --slack | --pretty]
-ai-quota kilo   [--json | --short | --slack]
+ai-quota kilo     [--json | --short | --slack]
+ai-quota lmstudio [--json | --short | --slack]
+ai-quota opencode [--json | --short | --slack]
 
 # Check all providers
 ai-quota all [--short | --slack]
@@ -78,6 +80,8 @@ Each provider spawns its respective CLI tool in a PTY, sends a status command (`
 | Gemini | `gemini` | `/stats` | Model name |
 | Codex | `codex` | `/status` | Token counts via SQLite |
 | Kilo | `kilo` | `stats` | Costs, tokens, and tool usage |
+| LM Studio | — | Conversation files | Token counts from local conversations |
+| OpenCode | `opencode` | `stats` | Costs, tokens, and session counts |
 
 ## Configuration
 
@@ -92,6 +96,10 @@ All configuration is via environment variables:
 | `GEMINI_USAGE_LOG` | `/tmp/gemini-usage.log` | Gemini debug log path |
 | `CODEX_USAGE_CACHE` | `/tmp/codex-usage.cache` | Codex cache path |
 | `CODEX_STATE_DB` | `~/.codex/state_5.sqlite` | Codex SQLite DB path |
+| `KILO_USAGE_CACHE` | `/tmp/kilo-usage.cache` | Kilo cache path |
+| `LMSTUDIO_USAGE_CACHE` | `/tmp/lmstudio-usage.cache` | LM Studio cache path |
+| `LMSTUDIO_CONVERSATIONS_DIR` | `~/.lmstudio/conversations` | LM Studio conversations directory |
+| `OPENCODE_USAGE_CACHE` | `/tmp/opencode-usage.cache` | OpenCode cache path |
 | `DEBUG` | — | Enable debug output |
 
 ## Project Structure
@@ -107,7 +115,10 @@ ai-quota/
 │   └── providers/
 │       ├── claude.py          # Claude Code provider
 │       ├── gemini.py          # Gemini CLI provider
-│       └── codex.py           # Codex/OpenAI provider
+│       ├── codex.py           # Codex/OpenAI provider
+│       ├── kilo.py            # Kilo provider
+│       ├── lmstudio.py        # LM Studio provider
+│       └── opencode.py        # OpenCode provider
 ├── tests/test_ai_quota/       # pytest suite
 └── pyproject.toml             # Build config & dependencies
 ```
