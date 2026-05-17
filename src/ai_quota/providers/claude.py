@@ -17,7 +17,7 @@ from ai_quota.formatters import fmt_bar, fmt_reset
 
 CACHE_FILE = os.environ.get("CLAUDE_USAGE_CACHE", "/tmp/cc-usage-pct.cache")
 TIMEOUT = int(os.environ.get("CLAUDE_USAGE_TIMEOUT", "30"))
-WORK_DIR = os.environ.get("CLAUDE_USAGE_DIR", os.path.expanduser("~/Projects/todos-automation"))
+WORK_DIR = os.environ.get("CLAUDE_USAGE_DIR", os.path.expanduser("~"))
 ROWS = 60
 COLS = 120
 
@@ -76,13 +76,10 @@ def parse_usage(lines: list[str]) -> list[dict]:
                 if not candidate or "% used" in low:
                     break
                 is_reset = bool(re.search(r"rese\s*t?s?\b", low))
-                if "$" in candidate and not reset_info:
-                    if is_reset:
-                        reset_info = candidate
-                    else:
-                        cost_info = candidate
-                elif is_reset:
+                if is_reset and not reset_info:
                     reset_info = candidate
+                elif "$" in candidate and not cost_info:
+                    cost_info = candidate
 
             entries.append({
                 "label": label,
@@ -143,9 +140,12 @@ def _parse_reset_ts(raw: str) -> str | None:
                 target = datetime.strptime(f"{month_str} {day} {now.year}", "%b %d %Y")
                 target = target.replace(hour=hour, minute=minute)
                 if target <= now:
-                    target = target.replace(year=now.year + 1)
+                    try:
+                        target = target.replace(year=now.year + 1)
+                    except ValueError:
+                        target = target.replace(year=now.year + 1, day=28)
             except ValueError:
-                pass
+                target = None
 
     return target.isoformat() if target else None
 

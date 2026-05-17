@@ -85,6 +85,17 @@ class TestParseUsage:
         entries = parse_usage(lines)
         assert "$1.23" in entries[0]["cost"]
 
+    def test_cost_captured_when_reset_line_precedes_cost(self):
+        lines = [
+            "session",
+            "50% used",
+            "Resets 11pm (America/Los_Angeles)",
+            "$1.23 used of $5.00",
+        ]
+        entries = parse_usage(lines)
+        assert entries[0]["reset_ts"] is not None
+        assert "$1.23" in entries[0]["cost"]
+
     def test_reset_ts_populated(self):
         lines = ["session", "50% used", "Resets 11pm (America/Los_Angeles)"]
         entries = parse_usage(lines)
@@ -151,3 +162,22 @@ class TestParseResetTs:
     def test_cost_line_with_resets(self):
         ts = self._future_ts("$1.23 used of $5.00 Resets 11pm (America/Los_Angeles)")
         assert ts is not None
+
+    def test_leap_day_year_rollover_does_not_crash(self):
+        from unittest.mock import patch
+
+        from ai_quota.providers import claude
+
+        # Pretend "now" is just after Feb 29 2024 (a leap year) so the parsed
+        # Feb 29 reset rolls into 2025 (not a leap year). Must not raise.
+        fake_now = datetime(2024, 2, 29, 23, 30)
+        with patch.object(claude, "datetime") as mock_dt:
+            mock_dt.now.return_value = fake_now
+            mock_dt.strptime = datetime.strptime
+            mock_dt.side_effect = lambda *a, **kw: datetime(*a, **kw)
+            ts = claude._parse_reset_ts("Resets Feb 29 at 10pm (America/Los_Angeles)")
+        assert ts is not None
+        result = datetime.fromisoformat(ts)
+        assert result.year == 2025
+        assert result.month == 2
+        assert result.day == 28
