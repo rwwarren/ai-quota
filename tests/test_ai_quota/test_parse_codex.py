@@ -89,6 +89,20 @@ class TestParseResetTs:
         dt = datetime.fromisoformat(ts)
         assert dt > datetime.now()
 
+    def test_leap_day_year_rollover_does_not_crash(self):
+        from ai_quota.providers import codex
+
+        fake_now = datetime(2024, 2, 29, 23, 30)
+        with patch.object(codex, "datetime") as mock_dt:
+            mock_dt.now.return_value = fake_now
+            mock_dt.strptime = datetime.strptime
+            ts = codex._parse_reset_ts("10:00", "29 Feb")
+        assert ts is not None
+        result = datetime.fromisoformat(ts)
+        assert result.year == 2025
+        assert result.month == 2
+        assert result.day == 28
+
 
 # ---------------------------------------------------------------------------
 # _query_db
@@ -113,6 +127,26 @@ class TestCodexQueryDb:
         assert result["today_tokens"] == 300
         assert result["today_sessions"] == 2
         assert result["all_time_tokens"] == 300
+        assert result["all_time_sessions"] == 2
+
+    def test_query_db_handles_null_tokens_used(self, tmp_path):
+        # An in-progress or failed thread may have NULL tokens_used; the
+        # query should treat it as 0 instead of crashing.
+        db_path = tmp_path / "state.sqlite"
+        conn = sqlite3.connect(str(db_path))
+        conn.execute("CREATE TABLE threads (tokens_used INTEGER, created_at INTEGER)")
+        now_ts = int(datetime.now().timestamp())
+        conn.execute("INSERT INTO threads VALUES (NULL, ?)", (now_ts,))
+        conn.execute("INSERT INTO threads VALUES (100, ?)", (now_ts + 10,))
+        conn.commit()
+        conn.close()
+
+        with patch.object(codex, "CODEX_STATE_DB", str(db_path)):
+            result = codex._query_db()
+        assert result is not None
+        assert result["today_tokens"] == 100
+        assert result["today_sessions"] == 2
+        assert result["all_time_tokens"] == 100
         assert result["all_time_sessions"] == 2
 
 

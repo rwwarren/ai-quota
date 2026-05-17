@@ -178,10 +178,18 @@ def _parse_reset_ts(resets_time: str, resets_date: str) -> str | None:
     try:
         target = datetime.strptime(f"{resets_date} {now.year} {resets_time}", "%d %b %Y %H:%M")
         if target <= now:
-            target = target.replace(year=now.year + 1)
+            target = _replace_year_safely(target, now.year + 1)
         return target.isoformat()
     except ValueError:
         return None
+
+
+def _replace_year_safely(dt: datetime, year: int) -> datetime:
+    """Replace year on a datetime, falling back to Feb 28 for leap-day inputs."""
+    try:
+        return dt.replace(year=year)
+    except ValueError:
+        return dt.replace(year=year, day=28)
 
 
 # ---------------------------------------------------------------------------
@@ -205,7 +213,7 @@ def _query_db() -> dict | None:
         db.close()
 
         return {
-            "today_tokens": sum(r[0] for r in rows),
+            "today_tokens": sum((r[0] or 0) for r in rows),
             "today_sessions": len(rows),
             "all_time_tokens": all_rows[0] or 0,
             "all_time_sessions": all_rows[1] or 0,
